@@ -5,13 +5,21 @@ import math
 import random
 import string
 
+def num_to_hex_frames(num):
+    """ Convert a given number to hex data frames to be send to the FPGA over UART. """
+    hex_num = hex(num)[2:].zfill(8)
+    return "".join([hex_num[6:8], hex_num[4:6], hex_num[2:4], hex_num[0:2]])
+
+def hex_frames_to_num(hex_frames):
+    """ Convert hex data frames to number. """
+    return "".join([hex_frames[6:8], hex_frames[4:6], hex_frames[2:4], hex_frames[0:2]])
+
 def send_to_fpga(opcode, data):
     """ Send the given message to the FPGA board through COM and return the message received. """
     length = 4 + len(data) // 2
     len_lsb = hex(length % 256)[2:].zfill(2)
     len_msb = hex(length >> 8)[2:].zfill(2)
     hex_message = "{}00{}{}{}".format(opcode, len_lsb, len_msb, data)
-    # Replace 'COMx' with the correct port (e.g., COM3 on Windows or /dev/ttyUSB0 on Linux/Mac)
     serial_port = '/dev/tty.usbserial-ibqDCLa91'  # Change as per your system
     baud_rate = 115200  # Set this to the baud rate configured on the FPGA
     try:
@@ -42,11 +50,9 @@ def echo(message):
 
 def add(*operands):
     """ Send the operands to the FPGA and expect to receive the sum of them back. """
-    data = [hex(x)[2:].zfill(8) for x in operands]
-    data = ["".join([x[6:8], x[4:6], x[2:4], x[0:2]]) for x in data]
+    data = [num_to_hex_frames(x) for x in operands]
     response = send_to_fpga(opcode="AD", data="".join(data))
-    result = response.hex()
-    result = "".join([result[6:8], result[4:6], result[2:4], result[0:2]])
+    result = hex_frames_to_num(response.hex())
     if int(result, 16) == sum(operands):
         return True
     else:
@@ -54,11 +60,9 @@ def add(*operands):
 
 def multiply(*operands):
     """ Send the operands to the FPGA and expect to receive the product of them back. """
-    data = [hex(x)[2:].zfill(8) for x in operands]
-    data = ["".join([x[6:8], x[4:6], x[2:4], x[0:2]]) for x in data]
+    data = [num_to_hex_frames(x) for x in operands]
     response = send_to_fpga(opcode="CA", data="".join(data))
-    result = response.hex()
-    result = "".join([result[6:8], result[4:6], result[2:4], result[0:2]])
+    result = hex_frames_to_num(response.hex())
     if int(result, 16) == math.prod(operands):
         return True
     else:
@@ -67,13 +71,10 @@ def multiply(*operands):
 
 def divide(dividend, divisor):
     """ Send the operands to the FPGA and expect to receive the division of them back. """
-    data = [hex(x)[2:].zfill(8) for x in [dividend, divisor]]
-    data = ["".join([x[6:8], x[4:6], x[2:4], x[0:2]]) for x in data]
+    data = [num_to_hex_frames(x) for x in [dividend, divisor]]
     response = send_to_fpga(opcode="DE", data="".join(data))
-    result_a = response.hex()[:8]
-    result_a = "".join([result_a[6:8], result_a[4:6], result_a[2:4], result_a[0:2]])
-    result_b = response.hex()[8:]
-    result_b = "".join([result_b[6:8], result_b[4:6], result_b[2:4], result_b[0:2]])
+    result_a = hex_frames_to_num(response.hex()[:8])
+    result_b = hex_frames_to_num(response.hex()[8:])
     if int(result_a, 16) == dividend // divisor and int(result_b, 16) == dividend % divisor:
         return True
     else:
