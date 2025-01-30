@@ -7,9 +7,8 @@ module icebreaker
     );
 
 localparam BAUD_RATE = 115200;
-localparam PRESCALE = 35;
+localparam PRESCALE = 25;
 localparam CLK_FREQ = 8.0 * BAUD_RATE * PRESCALE;
-localparam DATA_WIDTH = 8;
 
 wire clk_12 = CLK;
 wire clk_o;
@@ -18,7 +17,7 @@ wire clk_o;
 SB_PLL40_PAD
    #(.FEEDBACK_PATH("SIMPLE"),
      .DIVR(4'd0),
-     .DIVF(7'd85),
+     .DIVF(7'd60),
      .DIVQ(3'd5),
      .FILTER_RANGE(3'd1)
     )
@@ -31,8 +30,7 @@ pll
     );
 
 alu
-   #(.DATA_WIDTH_P(DATA_WIDTH)
-    ,.PRESCALE_P(PRESCALE)
+   #(.PRESCALE_P(PRESCALE)
     )
 alu_inst
     (.clk_i(clk_o)

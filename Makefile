@@ -23,7 +23,7 @@ lint:
 	verilator lint/verilator.vlt -f rtl/rtl.f -f dv/dv.f --lint-only --top alu
 
 sim:
-	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f rtl/rtl.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
+	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f rtl/rtl.f -f dv/pre_synth.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
 	./${TOP}_$@_dir/V${TOP} +verilator+rand+reset+2
 
 synth/build/rtl.sv2v.v: ${RTL} rtl/rtl.f
@@ -38,7 +38,7 @@ synth/yosys_generic/build/synth.v: synth/build/rtl.sv2v.v synth/yosys_generic/yo
 	mkdir -p $(dir $@)
 	yosys -p 'tcl synth/yosys_generic/yosys.tcl synth/build/rtl.sv2v.v' -l synth/yosys_generic/build/yosys.log
 
-icestorm_icebreaker_gls: synth/icestorm_icebreaker/build/synth.v
+icebreaker_gls: synth/icestorm_icebreaker/build/synth.v
 	verilator lint/verilator.vlt --Mdir ${TOP}_$@_dir -f synth/icestorm_icebreaker/gls.f -f dv/dv.f --binary -Wno-fatal --top ${TOP}
 	./${TOP}_$@_dir/V${TOP} +verilator+rand+reset+2
 
@@ -58,7 +58,7 @@ synth/icestorm_icebreaker/build/icebreaker.asc: synth/icestorm_icebreaker/build/
 %.bit: %.asc
 	icepack $< $@
 
-icestorm_icebreaker_program: synth/icestorm_icebreaker/build/icebreaker.bit
+program: synth/icestorm_icebreaker/build/icebreaker.bit
 	sudo $(shell which openFPGALoader) -b ice40_generic $<
 
 icestorm_icebreaker_flash: synth/icestorm_icebreaker/build/icebreaker.bit
